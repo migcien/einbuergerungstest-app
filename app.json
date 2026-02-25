@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Einbuergerungstest Trainer",
-    "slug": "einbuergerungstest-de",
+    "slug": "exam-trainer",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/de-flag.png",
@@ -51,4 +51,5 @@
     }
   }
 }
+
 

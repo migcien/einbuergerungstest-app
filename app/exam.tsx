@@ -1,29 +1,20 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import {
-  QUESTION_BANK,
-  QUESTION_COUNT,
-  buildStandardExamQuestions,
-  pickRandomQuestions,
-} from '@/lib/question-bank';
+import { getBundeslandLabel, resolveBundesland } from '@/lib/bundesland';
+import { buildStandardExamQuestions, getQuestionBank, pickRandomQuestions } from '@/lib/question-bank';
 import { getQuestionImageSource } from '@/lib/question-images';
-import {
-  LatestExamResult,
-  getProgress,
-  saveLatestExamResult,
-  saveProgress,
-} from '@/lib/storage';
+import { LatestExamResult, getProgress, saveLatestExamResult, saveProgress } from '@/lib/storage';
 import { Question } from '@/types/question';
 
 const PASS_SCORE = 17;
 const EXAM_OPTIONS = [
-  { key: 'standard33', label: '33 Standard', count: 33 },
-  { key: '10', label: '10', count: 10 },
-  { key: '20', label: '20', count: 20 },
-  { key: '50', label: '50', count: 50 },
-  { key: 'all', label: 'All', count: QUESTION_COUNT },
+  { key: 'standard33', label: '33 Standard' },
+  { key: '10', label: '10' },
+  { key: '20', label: '20' },
+  { key: '50', label: '50' },
+  { key: 'all', label: 'All' },
 ] as const;
 
 type ExamOptionKey = (typeof EXAM_OPTIONS)[number]['key'];
@@ -36,22 +27,32 @@ function resolveExamOptionKey(value: string | string[] | undefined): ExamOptionK
   return 'standard33';
 }
 
-function resolveQuestionsForOption(optionKey: ExamOptionKey): Question[] {
+function resolveQuestionsForOption(optionKey: ExamOptionKey, questionBank: Question[]): Question[] {
   if (optionKey === 'standard33') {
-    return buildStandardExamQuestions();
+    return buildStandardExamQuestions(questionBank);
   }
 
-  const selected = EXAM_OPTIONS.find((option) => option.key === optionKey);
-  if (!selected) {
-    return pickRandomQuestions(QUESTION_BANK, 10);
+  if (optionKey === '10') {
+    return pickRandomQuestions(questionBank, 10);
   }
 
-  return pickRandomQuestions(QUESTION_BANK, selected.count);
+  if (optionKey === '20') {
+    return pickRandomQuestions(questionBank, 20);
+  }
+
+  if (optionKey === '50') {
+    return pickRandomQuestions(questionBank, 50);
+  }
+
+  return pickRandomQuestions(questionBank, questionBank.length);
 }
 
 export default function ExamScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ mode?: string; retry?: string }>();
+  const params = useLocalSearchParams<{ mode?: string; retry?: string; bundesland?: string }>();
+
+  const bundesland = resolveBundesland(params.bundesland);
+  const questionBank = useMemo(() => getQuestionBank(bundesland), [bundesland]);
 
   const [selectedOption, setSelectedOption] = useState<ExamOptionKey>('standard33');
   const [active, setActive] = useState(false);
@@ -75,20 +76,23 @@ export default function ExamScreen() {
     [answers, questions],
   );
 
-  const startExam = (optionKey: ExamOptionKey) => {
-    const selectedQuestions = resolveQuestionsForOption(optionKey);
-    const initialAnswers: Record<string, number | null> = {};
-    selectedQuestions.forEach((question) => {
-      initialAnswers[question.id] = null;
-    });
+  const startExam = useCallback(
+    (optionKey: ExamOptionKey) => {
+      const selectedQuestions = resolveQuestionsForOption(optionKey, questionBank);
+      const initialAnswers: Record<string, number | null> = {};
+      selectedQuestions.forEach((question) => {
+        initialAnswers[question.id] = null;
+      });
 
-    setSelectedOption(optionKey);
-    setQuestions(selectedQuestions);
-    setAnswers(initialAnswers);
-    setCurrentIndex(0);
-    setShowLiveScore(false);
-    setActive(true);
-  };
+      setSelectedOption(optionKey);
+      setQuestions(selectedQuestions);
+      setAnswers(initialAnswers);
+      setCurrentIndex(0);
+      setShowLiveScore(false);
+      setActive(true);
+    },
+    [questionBank],
+  );
 
   useEffect(() => {
     if (params.retry !== '1') {
@@ -97,7 +101,7 @@ export default function ExamScreen() {
 
     const retryMode = resolveExamOptionKey(params.mode);
     startExam(retryMode);
-  }, [params.mode, params.retry]);
+  }, [params.mode, params.retry, startExam]);
 
   const finishExam = async () => {
     if (!questions.length) {
@@ -128,6 +132,7 @@ export default function ExamScreen() {
       correctById,
       examMode: selectedOption,
       passScore: PASS_SCORE,
+      bundesland,
     };
 
     await saveLatestExamResult(result);
@@ -145,25 +150,28 @@ export default function ExamScreen() {
     return (
       <View style={styles.setupContainer}>
         <Text style={styles.title}>Exam Setup</Text>
+        <Text style={styles.subtitle}>Bundesland: {getBundeslandLabel(bundesland)}</Text>
         <Text style={styles.subtitle}>Choose number of questions.</Text>
 
         <View style={styles.optionGrid}>
           {EXAM_OPTIONS.map((option) => {
             const selected = selectedOption === option.key;
+            const optionLabel =
+              option.key === 'all' ? `${option.label} (${questionBank.length})` : option.label;
             return (
               <Pressable
                 key={option.key}
                 style={[styles.setupOption, selected && styles.setupOptionSelected]}
                 onPress={() => setSelectedOption(option.key)}>
                 <Text style={[styles.setupOptionText, selected && styles.setupOptionTextSelected]}>
-                  {option.label}
+                  {optionLabel}
                 </Text>
               </Pressable>
             );
           })}
         </View>
 
-        <Text style={styles.standardHint}>Standard 33: 30 from first 300 + 3 from last 10.</Text>
+        <Text style={styles.standardHint}>Standard 33: 30 general + 3 state questions.</Text>
 
         <Pressable style={styles.primaryButton} onPress={() => startExam(selectedOption)}>
           <Text style={styles.primaryButtonText}>Start Exam</Text>

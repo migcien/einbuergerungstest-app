@@ -3,7 +3,8 @@ import { useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { QUESTION_BANK, QUESTION_COUNT } from '@/lib/question-bank';
+import { DEFAULT_BUNDESLAND } from '@/lib/bundesland';
+import { getQuestionBank } from '@/lib/question-bank';
 import { getQuestionImageSource } from '@/lib/question-images';
 import { LatestExamResult, getLatestExamResult } from '@/lib/storage';
 import { Question } from '@/types/question';
@@ -22,13 +23,15 @@ export default function ResultsScreen() {
     }, [loadResult]),
   );
 
+  const bundesland = result?.bundesland ?? DEFAULT_BUNDESLAND;
+
   const questionById = useMemo(() => {
     const map = new Map<string, Question>();
-    QUESTION_BANK.forEach((question) => {
+    getQuestionBank(bundesland).forEach((question) => {
       map.set(question.id, question);
     });
     return map;
-  }, []);
+  }, [bundesland]);
 
   const wrongQuestions = useMemo(() => {
     if (!result) {
@@ -54,14 +57,7 @@ export default function ResultsScreen() {
   const passScore = result.passScore ?? 17;
   const isPassed = result.score >= passScore;
   const percentage = Math.round((result.score / result.total) * 100);
-  const retryMode =
-    typeof result.examMode === 'string'
-      ? result.examMode
-      : result.examCount === 33
-        ? 'standard33'
-        : result.examCount === QUESTION_COUNT
-          ? 'all'
-          : String(result.examCount);
+  const retryMode = typeof result.examMode === 'string' ? result.examMode : 'standard33';
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -79,7 +75,7 @@ export default function ResultsScreen() {
           onPress={() =>
             router.replace({
               pathname: '/exam',
-              params: { retry: '1', mode: retryMode },
+              params: { retry: '1', mode: retryMode, bundesland },
             })
           }>
           <Text style={styles.secondaryButtonText}>Retry</Text>
@@ -90,7 +86,7 @@ export default function ResultsScreen() {
           onPress={() =>
             router.push({
               pathname: '/learn',
-              params: { source: 'mistakes' },
+              params: { source: 'mistakes', bundesland },
             })
           }>
           <Text style={styles.secondaryButtonText}>Review mistakes</Text>

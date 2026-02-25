@@ -1,50 +1,57 @@
-# Welcome to your Expo app 👋
+# Einbuergerungstest DE Trainer
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A mobile training and practice app for the German naturalization test (`Einbuergerungstest`).
 
-## Get started
+## What this project is
 
-1. Install dependencies
+This project is an Expo React Native app focused on test preparation. It provides an offline-friendly way to:
 
-   ```bash
-   npm install
-   ```
+- study questions in Learn mode,
+- run timed-style practice sessions in Exam mode,
+- review mistakes after each exam,
+- track your learning progress locally on your device.
 
-2. Start the app
+## What it is for
 
-   ```bash
-   npx expo start
-   ```
+The goal is practical preparation for the German naturalization test by practicing the official-style question format repeatedly until you are confident.
 
-In the output, you'll find options to open the app in a
+Current catalog in this repo:
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- 310 questions total
+- 300 general questions
+- 10 state-specific questions for NRW (`Nordrhein-Westfalen`)
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+Catalog status: updated to January 2026.
 
-## Get a fresh project
+## Bundesland selection
 
-When you're ready, run:
+The app starts with Bundesland selection so question catalogs can be split by state.
+
+- Currently available: NRW
+- Architecture is ready to add additional Bundeslaender and catalogs later
+
+## App info
+
+An in-app info button is included on the home screen with author attribution:
+
+- Developed by `migcien`
+- https://github.com/migcien
+
+## Development
+
+Install dependencies:
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Run the app:
 
-## Learn more
+```bash
+npx expo start
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+## Notes
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- This is an independent study app.
+- It is not an official app from any German federal authority.

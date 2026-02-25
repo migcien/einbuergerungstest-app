@@ -3,7 +3,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { QUESTION_BANK } from '@/lib/question-bank';
+import { resolveBundesland } from '@/lib/bundesland';
+import { getQuestionBank } from '@/lib/question-bank';
 import { getQuestionImageSource } from '@/lib/question-images';
 import {
   DEFAULT_PROGRESS,
@@ -22,7 +23,7 @@ function toggleItem(items: string[], id: string): string[] {
 
 export default function LearnScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ source?: string }>();
+  const params = useLocalSearchParams<{ source?: string; bundesland?: string }>();
   const [progress, setProgress] = useState<ProgressState>(DEFAULT_PROGRESS);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedById, setSelectedById] = useState<Record<string, number>>({});
@@ -30,6 +31,8 @@ export default function LearnScreen() {
   const [completionHandled, setCompletionHandled] = useState(false);
 
   const mistakesOnly = params.source === 'mistakes';
+  const bundesland = resolveBundesland(params.bundesland);
+  const questionBank = useMemo(() => getQuestionBank(bundesland), [bundesland]);
 
   const loadProgress = useCallback(async () => {
     const [nextProgress, checkpoint] = await Promise.all([
@@ -66,12 +69,12 @@ export default function LearnScreen() {
 
   const questions: Question[] = useMemo(() => {
     if (!mistakesOnly) {
-      return QUESTION_BANK;
+      return questionBank;
     }
 
     const mistakes = new Set(progress.mistakeIds);
-    return QUESTION_BANK.filter((question) => mistakes.has(question.id));
-  }, [mistakesOnly, progress.mistakeIds]);
+    return questionBank.filter((question) => mistakes.has(question.id));
+  }, [mistakesOnly, progress.mistakeIds, questionBank]);
 
   const safeIndex = questions.length > 0 ? currentIndex % questions.length : 0;
   const question = questions[safeIndex];

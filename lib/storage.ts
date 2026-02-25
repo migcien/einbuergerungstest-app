@@ -1,8 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { DEFAULT_BUNDESLAND, BundeslandKey, isBundeslandKey } from '@/lib/bundesland';
+
 const PROGRESS_KEY = 'einburg:progress';
 const LATEST_EXAM_KEY = 'einburg:latestExam';
 const LEARN_CHECKPOINT_KEY = 'einburg:learnCheckpoint';
+const SELECTED_BUNDESLAND_KEY = 'einburg:selectedBundesland';
 
 export type ProgressState = {
   knownIds: string[];
@@ -21,6 +24,7 @@ export type LatestExamResult = {
   correctById: Record<string, number>;
   examMode?: string;
   passScore?: number;
+  bundesland?: BundeslandKey;
 };
 
 export type LearnCheckpoint = {
@@ -154,4 +158,17 @@ export async function saveLearnCheckpoint(checkpoint: LearnCheckpoint): Promise<
 
 export async function clearLearnCheckpoint(): Promise<void> {
   await AsyncStorage.removeItem(LEARN_CHECKPOINT_KEY);
+}
+
+export async function getSelectedBundesland(): Promise<BundeslandKey> {
+  try {
+    const raw = await AsyncStorage.getItem(SELECTED_BUNDESLAND_KEY);
+    return isBundeslandKey(raw) ? raw : DEFAULT_BUNDESLAND;
+  } catch {
+    return DEFAULT_BUNDESLAND;
+  }
+}
+
+export async function saveSelectedBundesland(bundesland: BundeslandKey): Promise<void> {
+  await AsyncStorage.setItem(SELECTED_BUNDESLAND_KEY, bundesland);
 }

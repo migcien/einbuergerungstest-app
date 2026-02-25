@@ -30,13 +30,6 @@ The app starts with Bundesland selection so question catalogs can be split by st
 - Currently available: NRW
 - Architecture is ready to add additional Bundeslaender and catalogs later
 
-## App info
-
-An in-app info button is included on the home screen with author attribution:
-
-- Developed by `migcien`
-- https://github.com/migcien
-
 ## Development
 
 Install dependencies:
